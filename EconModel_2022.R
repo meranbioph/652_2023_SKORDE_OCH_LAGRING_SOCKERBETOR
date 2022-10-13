@@ -13,7 +13,7 @@
 ########################################
 
 modes <- c("develop","publish")
-w <- 1L
+w <- 2L
 mode <- modes[w] 
 
 ###############################################
@@ -39,7 +39,8 @@ if(mode == "develop"){
  # -------------------------------------------
  Rpackages_version = c("dplyr_1.0.7", 
                        "data.table_1.14.2", 
-                       "lubridate_1.8.0"
+                       "lubridate_1.8.0",
+                       "tidyr_1.1.4"
                        )
  path_Rpackages = "C:/R packages_412"
  # -------------------------------------------
@@ -78,6 +79,7 @@ if(mode == "publish"){
   library("dplyr")
   library("data.table")
   library("lubridate")
+  library("tidyr")
 }
  
 ###############################################
@@ -142,9 +144,11 @@ temp_tab_historical <- data.frame(
   yr2021 = c(17.7,18.1,17.7,15.3,15.4,15,16.4,14.7,12.8,10.8,10.2,10.5,12.8,13.9,13.7,14.1,12.3,15.6,14.2,12.6,11.8,13,13,15.5,13.3,11.5,12.2,10.1,9.6,9.5,8.5,10.5,7.7,7,11,10.8,9.2,9.1,6.8,11.2,14.2,10.3,7.7,7.6,7.8,7.8,10.5,12.5,12.1,9.7,9.6,11.2,11.2,8.8,6.6,7.1,8.1,9.9,9,5.6,7.6,9.8,9.4,7.5,7.8,7.5,6.8,5.9,6,8.6,11.6,9.9,5.8,2.1,6.5,7.6,6.3,3,2.3,2.1,-0.3,-0.4,0.2,-0.7,0.2,3.3,0.7,-1.9,-0.2,0.4,0.5,0.2,0.3,1.4,4.2,5.6,7.2,6.3,3.9,4.7,4.2,0.4,-2.4,0.3,0.7,-4,-5.2,-4.9,-3.6,0.1,1,4.5,7.3,6.3,7.8,6.8,3.7,2.5,-0.9,1.8,2.4,2,1.7,0,3.1,7.2,5.8,0.8,3.7,3.6,1.8,3.3,0.6,1.5,-0.5,3.8,4.7,4.2,4.7,5.6,3.2,5.4,4.9,-0.5,1.2,0.5,3.5,4.7,3.5,3.7,3,5.3,5.2,3.6,1.7,1.6,2.8,5.6,5.4,5.3,5,3.9,4,3.6,4.4,2.2,5.6,5.6,3.4,2.1,0.6,1.4)
 )
 
+temp_tab_historical$lt_ave_TM <- rowMeans(temp_tab_historical)
+
 ### Get 2022 weather data
 
-startDate <- first_day
+startDate <- date(first_day)
 endDate <- today()-1
 
 ### LOCATIONS
@@ -192,17 +196,32 @@ for (i in 1:len_matrix){
 
 rm(dat_in_i, len_startDate, len_stations, len_ele, len_matrix, startDate_c, endDate_c, stations_c, logInterval_c, elementMeasurement_c, urlBase)
 
+lt_fill <- temp_tab_historical$lt_ave_TM[(as.numeric(endDate-startDate)+2):length(temp_tab_historical$lt_ave_TM)]
+lt_fill <- data.frame("V1" = lt_fill,
+                      "V2" = lt_fill,
+                      "V3" = lt_fill,
+                      "V4" = lt_fill,
+                      "V5" = lt_fill,
+                      "V6" = lt_fill,
+                      "V7" = lt_fill,
+                      "V8" = lt_fill,
+                      "V9" = lt_fill)
+names(lt_fill) <- c(stations$WSTN_namn, "yr2022")
+
 dat_sum <- dat_in %>% 
-  group_by(DAY) %>% 
-  summarise(mean = mean(TM)) %>%
-  ungroup()
+  left_join(stations, by = "WSTNID") %>% 
+  select(-c(HOUR, WSTNID, lat, long)) %>% 
+  pivot_wider(names_from = WSTN_namn, values_from = TM) %>% 
+  rowwise() %>% 
+  mutate(yr2022 = mean(c_across(Borgeby:Jonstorp))) %>% 
+  ungroup() %>% 
+  select(-DAY) %>% 
+  rbind(lt_fill)
 
-dat_sum_vec <- unlist(dat_sum$mean)
-lt_ave_TM <- rowMeans(temp_tab_historical)
-yr2022 <- round(c(dat_sum_vec, lt_ave_TM[(length(dat_sum_vec)+1):length(lt_ave_TM)]),1)
-temp_tab_historical$yr2022 <- yr2022 
+temp_tab_historical <- temp_tab_historical %>% 
+  cbind(dat_sum)
 
-rm(stations, dat_in, dat_sum, dat_sum_vec, lt_ave_TM)
+rm(stations, dat_in, dat_sum, lt_fill)
 
 #####
 
@@ -219,6 +238,12 @@ renhet_loss_pp <- (days_post_harvest*(-0.0022)+0.0438)/100
 renhet_loss_mdl <- data.frame(days_post_harvest, renhet_loss_pp)
 renhet_loss_mdl$renhet_loss_pp[which(renhet_loss_mdl$renhet_loss_pp >= 0)] <- 0
 renhet_loss_mdl$renhet_loss_pp_cum <- cumsum(renhet_loss_mdl$renhet_loss_pp)
+
+# LEVERANS ORENHETER KOSTNADER
+lev_km <- seq(0,240)
+lev_sek <- c("00.00	23.74	24.47	25.19	25.92	26.66	27.38	28.11	28.84	29.56	30.29	31.01	31.74	32.47	33.19	33.92	34.65	35.37	36.1	36.83	37.55	38.28	39	39.73	40.46	41.18	42	42.81	43.63	44.44	45.25	46.08	46.91	47.73	48.56	49.39	50.21	51.04	51.87	52.69	53.52	54.34	55.17	56	56.82	57.65	58.49	59.33	60.17	61.01	61.85	62.68	63.52	64.36	65.2	66.04	66.88	67.72	68.56	69.4	70.24	71.16	72.09	73.02	73.94	74.87	75.81	76.75	77.69	78.63	79.56	80.45	81.34	82.23	83.12	84.01	84.86	85.71	86.57	87.42	88.27	89.12	89.97	90.81	91.66	92.51	93.36	94.22	95.07	95.92	96.76	97.61	98.46	99.3	100.15	101	101.84	102.69	103.55	104.38	105.24	106.09	106.93	107.78	108.63	109.47	110.32	111.17	112.01	112.86	113.71	114.55	115.39	116.23	117.07	117.91	118.75	119.59	120.43	121.27	122.1	122.94	123.78	124.62	125.46	126.3	127.14	127.96	128.79	129.62	130.44	131.27	132.03	132.8	133.56	134.33	135.09	135.85	136.62	137.38	138.15	138.85	139.55	140.25	140.95	141.65	142.29	142.93	143.48	143.94	144.41	144.87	145.33	145.8	146.26	146.72	147.19	147.65	148.11	148.58	149.04	149.5	149.97	150.43	150.89	151.36	151.82	152.28	152.75	153.21	153.67	154.14	154.6	155.06	155.53	155.99	156.45	156.92	157.38	157.84	158.31	158.77	159.23	159.7	160.25	160.8	161.35	161.9	162.45	163	163.55	164.1	164.66	165.21	165.76	166.22	166.68	167.15	167.61	168.07	168.54	169	169.46	169.93	170.39	170.85	171.32	171.78	172.24	172.71	173.17	173.63	174.1	174.56	175.02	175.49	175.95	176.41	176.88	177.34	177.8	178.27	178.73	179.19	179.66	180.12	180.45	180.65	180.85	181.05	181.25	181.45	181.65	181.85	182.05	182.25	182.45	182.65	182.85	183.05	183.25")
+lev_sek <- as.numeric(unlist(strsplit(lev_sek, "\t")))
+lev_tab <- data.frame(lev_km, lev_sek)
 
 lang_col <<- 3
 
@@ -297,7 +322,7 @@ values <- reactiveValues()
 
 {
   language_tab <- matrix(c(
-    "AAA", "SUGAR BEET HARVEST AND STORAGE - 2021 SWEDEN", "SKÖDE OCH LAGRING AV SOCKERBETOR - SVERIGE 2021",
+    "AAA", "SUGAR BEET HARVEST AND STORAGE - 2022 SWEDEN", "SKÖDE OCH LAGRING AV SOCKERBETOR - SVERIGE 2022",
     "ATA", "Field", "Fält",
     "ATB", "Harvest", "Upptagning",
     "ATC", "Clamp", "Stuka",
@@ -312,7 +337,7 @@ values <- reactiveValues()
     "BAE", "The model is general and may not be suitable to apply to your own production system.", "Modellen är generell och kanske inte lämplig för just ditt eget produktionssystem.",
     "BAF", "This model is not able to reflect that variability in the production system that occur from day to day in reality.", "Denna modell kan inte återspegla den variation i produktionssystemet som uppstår från dag till dag i verkligheten.",
     "BAG", "It similarly is not able to reflect your willingness to accept these production risks.", "På samma sätt kan den inte återspegla din vilja att acceptera dessa produktionsrisker.",
-    "BAH", "The 2021 price model for Sweden is applied. Prices are assumed fixed in SEK.", "Prismodellen 2021 för Sverige tillämpas.",
+    "BAH", "The 2022 price model for Sweden is applied. Prices are assumed fixed in SEK.", "Prismodellen 2022 för Sverige tillämpas.",
     "BAI", "INSTRUCTIONS", "INSTRUKTIONER",
     "BAJ", "Basically, just work through the tabs.", "Det är bara att klicka igenom flikarna ovan och fylla i informationen som efterfrågas.",
     "BAK", "The default values set are those that approximately reflect the industry averages.", "De förifyllda värdena är de som ungefär återspeglar branschens genomsnitt.",
@@ -805,7 +830,8 @@ ui <- fluidPage(
                      column(2, actionButton("help_storage_temp", "?"))
                      ),
                    selectInput("temp_clamp_model",isolate(values$EAD), choices = list("Moving average with floor"=1, "Air with floor"=2, "Air"=3, "Ventilated" = 4)),
-                   selectInput("temp_air_yr",isolate(values$EAE), choices = list("2022"="yr2022", "2021"="yr2021", "2020"="yr2020", "2019"="yr2019", "2018"="yr2018", "2017"="yr2017", "2016"="yr2016")),
+                   selectInput("temp_air_yr",isolate(values$EAE), choices = list("2022"="yr2022", "2021"="yr2021", "2020"="yr2020", "2019"="yr2019", "2018"="yr2018", "2017"="yr2017", "2016"="yr2016",
+                                                                                 "Long term average"="lt_ave_TM", "Borgeby"="Borgeby","Hammenhög"="Hammenhög","Sandby gård"= "Sandby gård","Gretelund"="Gretelund","Lovisero"="Lovisero","Tofta"="Tofta","Hviderup"="Hviderup","Jonstorp"="Jonstorp")),
                    sliderInput("clamp_size", isolate(values$EAF), step = 0.1, min=7, max=9, value=8),
                    sliderInput("ref_temp", isolate(values$EAG), min=0, max=10, value=2)
                  ),
