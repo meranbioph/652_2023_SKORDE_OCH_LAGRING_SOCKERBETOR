@@ -1,0 +1,14 @@
+name: 2022_SKORDE_OCH_LAGRING_SOCKERBETOR
+title: 2022_SKORDE_OCH_LAGRING_SOCKERBETOR
+username:
+account: nordicbeet
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 7297135
+bundleId: 6399164
+url: https://nordicbeet.shinyapps.io/2022_SKORDE_OCH_LAGRING_SOCKERBETOR/
+when: 1665665530.60752
+lastSyncTime: 1665665530.60752
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: EconModel_HistoricalWeather.R|NBR_RGB.png|SE_2022.xlsx

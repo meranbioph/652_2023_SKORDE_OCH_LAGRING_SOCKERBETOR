@@ -1,84 +1,77 @@
 ########################################
 #
-# Swedish sugar beets economic model
+# Swedish sugar beets economic model, 2022
 # Will English, 2021-03-18
-#
-# Version 2022-10-13
-# This is the 2022 version of the model. Updates include:
-# - just one file: no "_pub" version (CRTL+SHFT+C in / out the Setup sections)
-# - 2022 price model, including 3 levels of volume/ market bonus
-# - weather data imported for current year up to yesterday, with the rest of the filled with the average 2016-21
-# - minor coding updates that hopefully save micro seconds
+# Version 2021-11-11 R v4.1.2, snapshot 2021-11-01
 #
 ########################################
 
-modes <- c("develop","publish")
-w <- 1L
-mode <- modes[w] 
 
 ###############################################
 #
-# Setup 1
+# Setup
 #
 ###############################################
 
-if(mode == "develop"){
- # -------------------------------------------
- snapshot_date = "2021-11-01"
- options("repos" = paste0("https://mran.revolutionanalytics.com/snapshot/", snapshot_date))
- # -------------------------------------------
+# {
+#  # -------------------------------------------
+#  snapshot_date = "2021-11-01"
+#  options("repos" = paste0("https://mran.revolutionanalytics.com/snapshot/", snapshot_date))
+#  # -------------------------------------------
+# 
+#  # -------------------------------------------
+#  # sink options
+#  options(width = 150)
+#  # rJava memory option
+#  options(java.parameters = "-Xmx8000m")
+#  # -------------------------------------------
+# 
+#  # R packages
+#  # -------------------------------------------
+#  Rpackages_version = c("shiny_1.7.2", 
+#                        "plotly_4.10.0", 
+#                        "sets_1.0-19", 
+#                        "ggplot2_3.3.5", 
+#                        "reshape2_1.4.4", 
+#                        "TTR_0.24.2",
+#                        "shinyWidgets_0.7.4"
+#                        )
+#  path_Rpackages = "C:/R packages_412"
+#  # -------------------------------------------
+#  
+#  # -------------------------------------------
+#  sessionInfo()
+#  # -------------------------------------------
+# 
+#  # version check and load packages
+#  # -------------------------------------------
+#  # R version check
+#  if(sessionInfo()$R.version$version.string != "R version 4.1.2 (2021-11-01)") stop("R.version must be 4.1.1 (2021-11-01)")
+# 
+#  # install packages
+#  Rpack = sapply(strsplit(Rpackages_version, "_", fixed = T), FUN = function(x) x[1])
+#  Rpack_version = sapply(strsplit(Rpackages_version, "_", fixed = T), FUN = function(x) x[2])
+#  if(!all(Rpack %in% list.files(path_Rpackages))){
+#    loadRpackages <- Rpack[!Rpack %in% list.files(path_Rpackages)]
+#    for(i in loadRpackages) install.packages(i, lib = path_Rpackages, repos = options("repos"), dependencies = T)
+#  }
+# 
+#  # load packages
+#  for(i in Rpack) eval(parse(text = paste0("library(", i, ", lib.loc = '", path_Rpackages, "')")))
+# 
+#  # Version check
+#  loadedPackagesAndVersions = sapply(sessionInfo()$otherPkgs, FUN = function(x) paste(x$Package, x$Version, sep = "_"))
+#  Rpack = Rpack[!Rpackages_version %in% loadedPackagesAndVersions]
+#  if(length(Rpack) > 0){
+#    for(i in rev(Rpack)) try(eval(parse(text = paste0("detach('package:", i, "', unload = T)"))), silent = T)
+#    for(i in Rpack) install.packages(i, lib = path_Rpackages, repos = options("repos"), dependencies = T)
+#    for(i in Rpack) eval(parse(text = paste0("library(", i, ", lib.loc = '", path_Rpackages, "')")))
+#  }
+# }
 
- # -------------------------------------------
- # sink options
- options(width = 150)
- # rJava memory option
- options(java.parameters = "-Xmx8000m")
- # -------------------------------------------
-
- # R packages
- # -------------------------------------------
- Rpackages_version = c("dplyr_1.0.7", 
-                       "data.table_1.14.2", 
-                       "lubridate_1.8.0"
-                       )
- path_Rpackages = "C:/R packages_412"
- # -------------------------------------------
- 
- # -------------------------------------------
- sessionInfo()
- # -------------------------------------------
-
- # version check and load packages
- # -------------------------------------------
- # R version check
- if(sessionInfo()$R.version$version.string != "R version 4.1.2 (2021-11-01)") stop("R.version must be 4.1.2 (2021-11-01)")
-
- # install packages
- Rpack = sapply(strsplit(Rpackages_version, "_", fixed = T), FUN = function(x) x[1])
- Rpack_version = sapply(strsplit(Rpackages_version, "_", fixed = T), FUN = function(x) x[2])
- if(!all(Rpack %in% list.files(path_Rpackages))){
-   loadRpackages <- Rpack[!Rpack %in% list.files(path_Rpackages)]
-   for(i in loadRpackages) install.packages(i, lib = path_Rpackages, repos = options("repos"), dependencies = T)
- }
-
- # load packages
- for(i in Rpack) eval(parse(text = paste0("library(", i, ", lib.loc = '", path_Rpackages, "')")))
-
- # Version check
- loadedPackagesAndVersions = sapply(sessionInfo()$otherPkgs, FUN = function(x) paste(x$Package, x$Version, sep = "_"))
- Rpack = Rpack[!Rpackages_version %in% loadedPackagesAndVersions]
- if(length(Rpack) > 0){
-   for(i in rev(Rpack)) try(eval(parse(text = paste0("detach('package:", i, "', unload = T)"))), silent = T)
-   for(i in Rpack) install.packages(i, lib = path_Rpackages, repos = options("repos"), dependencies = T)
-   for(i in Rpack) eval(parse(text = paste0("library(", i, ", lib.loc = '", path_Rpackages, "')")))
- }
-}
-
-if(mode == "publish"){
-  library("dplyr")
-  library("data.table")
-  library("lubridate")
-}
+library("dplyr")
+library("data.table")
+library("lubridate")
  
 ###############################################
 # ---------------------------------------------
@@ -203,7 +196,7 @@ yr2022 <- round(c(dat_sum_vec, lt_ave_TM[(length(dat_sum_vec)+1):length(lt_ave_T
 temp_tab_historical$yr2022 <- yr2022 
 
 rm(stations, dat_in, dat_sum, dat_sum_vec, lt_ave_TM)
-
+  
 #####
 
 root_tip_break_perc <- seq(0,100,5)
@@ -222,72 +215,18 @@ renhet_loss_mdl$renhet_loss_pp_cum <- cumsum(renhet_loss_mdl$renhet_loss_pp)
 
 lang_col <<- 3
 
+detach("package:dplyr")
+detach("package:data.table")
+detach("package:lubridate")
 
-###############################################
-#
-# Setup 2
-#
-###############################################
+library("shiny") 
+library("plotly")
+library("sets")
+library("ggplot2")
+library("reshape2")
+library("TTR") 
+library("shinyWidgets")
 
-if(mode == "develop"){
-  # -------------------------------------------
-  snapshot_date = "2021-11-01"
-  options("repos" = paste0("https://mran.revolutionanalytics.com/snapshot/", snapshot_date))
-  # -------------------------------------------
-  
-  # -------------------------------------------
-  # sink options
-  options(width = 150)
-  # rJava memory option
-  options(java.parameters = "-Xmx8000m")
-  # -------------------------------------------
-  
-  # R packages
-  # -------------------------------------------
-  Rpackages_version = c("shiny_1.7.1", 
-                        "plotly_4.10.0", 
-                        "sets_1.0-19", 
-                        "ggplot2_3.3.5", 
-                        "reshape2_1.4.4", 
-                        "TTR_0.24.2",
-                        "shinyWidgets_0.6.2")
-  path_Rpackages = "C:/R packages_412"
-  # -------------------------------------------
-  
-  # -------------------------------------------
-  sessionInfo()
-  # -------------------------------------------
-  
-  # install packages
-  Rpack = sapply(strsplit(Rpackages_version, "_", fixed = T), FUN = function(x) x[1])
-  Rpack_version = sapply(strsplit(Rpackages_version, "_", fixed = T), FUN = function(x) x[2])
-  if(!all(Rpack %in% list.files(path_Rpackages))){
-    loadRpackages <- Rpack[!Rpack %in% list.files(path_Rpackages)]
-    for(i in loadRpackages) install.packages(i, lib = path_Rpackages, repos = options("repos"), dependencies = T)
-  }
-  
-  # load packages
-  for(i in Rpack) eval(parse(text = paste0("library(", i, ", lib.loc = '", path_Rpackages, "')")))
-  
-  # Version check
-  loadedPackagesAndVersions = sapply(sessionInfo()$otherPkgs, FUN = function(x) paste(x$Package, x$Version, sep = "_"))
-  Rpack = Rpack[!Rpackages_version %in% loadedPackagesAndVersions]
-  if(length(Rpack) > 0){
-    for(i in rev(Rpack)) try(eval(parse(text = paste0("detach('package:", i, "', unload = T)"))), silent = T)
-    for(i in Rpack) install.packages(i, lib = path_Rpackages, repos = options("repos"), dependencies = T)
-    for(i in Rpack) eval(parse(text = paste0("library(", i, ", lib.loc = '", path_Rpackages, "')")))
-  }
-}
-
-if(mode == "publish"){
-  library("shiny")
-  library("plotly")
-  library("sets")
-  library("ggplot2")
-  library("reshape2")
-  library("TTR")
-  library("shinyWidgets")
-}
 
 ###############################################
 # Translation table
@@ -392,18 +331,15 @@ values <- reactiveValues()
     "FAB", "DELIVERY", "LEVERANS",
     "FAC", "Delivery date", "Leveransdatum",
     "FAD", "Distance to deliver (mil)", "Avstånd till fabrik (mil)",
-    "FAE", "Cost for delivery", "Renbetor leveranskostnad (utöver 8 mil)",
+    "FAE", "Cost for delivery", "Leveranskostnad",
     "FAF", "Delivery costs", "Leveranskostnader",
-    "FTA", "Dirt", "Orenheter",
-    "FTB", "Clean beet", "Renbetor",
-    "FTC", "Total", "Total",
-    "FTD", "Tonne", "Ton",
-    "FTE", "t / ha", "t / ha",
-    "FTE", "Mil", "Mil",
-    "FTE", "SEK", "SEK",
-    "FTE", "SEK / ha", "SEK / ha",
-    "FTE", "SEK / t", "SEK / t",
-    "FTE", "SEK / mil", "SEK / mil",
+    "FTA", "Field", "Fält",
+    "FTB", "Mil", "Mil",
+    "FTC", "Tonne", "Ton",
+    "FTD", "Tonnes per...", "Ton per ...",
+    "FTE", "Cost per ... (SEK)", "Kostnad per... (SEK)",
+    "FTF", "Cost per clean tonne (SEK)", "Kostnad per ton rena betor (SEK)",
+    "FTG", "Cost of soil transport (SEK)", "Kostnad för jordtransport (SEK)",
     
     
     "GAA", "PROD./ PAYMENT", "PROD./ BETALNING",
@@ -431,7 +367,6 @@ values <- reactiveValues()
     "GTL", "Base price", "Baspris",
     "GTM", "Bonuses", "Bonus",
     "GTN", "Total payment", "Total betalning",
-    "GTO", "Cleanness (%)","Renhet (%)",
     
     
     "HAA", "SUMMARY TABLE", "SAMMANFATTNING - TAB",
@@ -443,9 +378,9 @@ values <- reactiveValues()
     "HTC", "Temp. (°C)", " Temp. (°C)",
     "HTD", "Cum. Temp (°Cd)", "Acc. Temp (°Cd)",
     "HTE", "Cum. pol loss (%)", "Acc pol förlust (%)",
-    "HTF", "Pol", "Pol (%)",
-    "HTG", "Root Yield", "Rotskörd (t/ha)",
-    "HTH", "Sugar Yield", "Sockerskörd (t/ha)",
+    "HTF", "Pol", "Pol",
+    "HTG", "Root Yield", "Rotskörd",
+    "HTH", "Sugar Yield", "Sockerskörd",
     "HTI", "Base price - clean tn", "Baspris per ton rena betor",
     "HTJ", "Bonus - clean tn", "Bonus per ton rena betor",
     "HTK", "Payment - clean tn", "Totall betalning per ton rena betor",
@@ -459,7 +394,6 @@ values <- reactiveValues()
     "HTS", "Bonus - field", "Bonus per fält",
     "HTT", "Payment - field", " per fält",
     "HTU", "Cleanness (%)", "Renhet (%)", 
-    "HTV", "Dirt (t/ha)", "Orenheter (t/ha)", 
     
     
     "IAA", "PRODUCTION - CHARTS", "PRODUKTION - DIAGRAM",
@@ -501,8 +435,8 @@ values <- reactiveValues()
     "JDL", "INCOME PER DELIVERED (17%) TON", "INTÄKT PER TON LEVERERADBETOR (17%)",
     
     
-    "KAA", "COMPARE", "JÄMFÖR",
-    "KAB", "COMPARE +", "JÄMFÖR +",
+    "KAA", "COMPARE", "JÄMFÖRA",
+    "KAB", "COMPARE +", "JÄMFÖRA +",
     "KDA", "Cum. sug", "Acc. sug",
     "KDB", "Sugar yield (t/ha)", "Sockerskörd (t/ha)",
     "KBC", "Date", "Datum",
@@ -608,8 +542,6 @@ values$root_harvest_1_y_lim <- 10
 values$root_harvest_2_y_lim <- 10
 values$root_harvest_y_lim <- 10
 
-
-
 ###############################################
 #
 # Fuzzy loss model
@@ -622,7 +554,7 @@ values$root_harvest_y_lim <- 10
 
 sets_options("universe", seq(1, 100, 0.5))
 
-variables <- set(
+variables <- sets::set(
   variety = fuzzy_partition(varnames = c(hard = 100, normal = 40, soft = 0), 
                             sd = 20.0),
   harvester_cleaning = fuzzy_partition(varnames = c(gentle = 0, medium = 60,
@@ -633,8 +565,7 @@ variables <- set(
                               FUN = fuzzy_cone, radius = 10)
 )
 
-
-rules <- set(
+rules <- sets::set(
   fuzzy_rule(variety %is% hard && harvester_cleaning %is% gentle && late_moisture %is% perfect, loss_rate %is% v.low),
   fuzzy_rule(variety %is% normal && harvester_cleaning %is% medium && late_moisture %is% dry, loss_rate %is% medium),
   fuzzy_rule(variety %is% soft && harvester_cleaning %is% hard && late_moisture %is% wet, loss_rate %is% v.high),
@@ -652,9 +583,6 @@ rules <- set(
 
 model <- fuzzy_system(variables, rules)
 
-
-
-
 ###############################################
 #
 # Shiny user interface
@@ -663,16 +591,14 @@ model <- fuzzy_system(variables, rules)
 #
 ###############################################
 
-
 ui <- fluidPage(
   tags$head(
     tags$style(HTML("
-    {color:#4A4C64}
+      {color:#4A4C64}
       h4 {color: #4A4C64}
-      .tabbable > .nav > li > a   {color:#4A4C64; font-weight: bold; font-size: 15px}
+      .tabbable > .nav > li > a   {color:#4A4C64; font-weight:bold; font-size:15px}
       .tabbable > .nav-tab {margin-top:50px;}
       "))),
-  #.well {background-color:#E2DAD2}
   setBackgroundColor(
       color = c("#F4F2F0") #TAN - Lighter: #F4F2F0 Darker: #E2DAD2
     ),
@@ -680,7 +606,7 @@ ui <- fluidPage(
     skin = c("Modern"),
     color = c("#4A4C64")
     ),
-  titlePanel(title=div(isolate(values$AAA),img(src='NBR_RGB.png', height = "70px", align = "right"))), 
+  titlePanel(title=div(isolate(values$AAA),img(src='NBR_RGB.png', height = "70px", align = "right"))),
   style='color:#4A4C64',
   tabsetPanel(
     tabPanel(isolate(values$BAA), 
@@ -737,7 +663,7 @@ ui <- fluidPage(
              ),
              fluidRow(
                column(12, h4("FÖRBÄTTRINGAR OCH DOKUMENTATION"),
-                "Ser dokument på", tags$a(href="https://github.com/Nordic-Beet-Research/SKORDE_OCH_LAGRING_SOCKERBETOR/blob/9d26d582ad5c4ebbcdaea1f564e024a10fa782a4/Model%20descriptions/EconModel_Models.pdf","Github"),
+                "Ser dokument på", tags$a(href="https://github.com/Nordic-Beet-Research/SKORDE_OCH_LAGRING_SOCKERBETOR/blob/30d4b2f6faf02ce1d7f13e83d9c000ac533ac0fc/Model%20descriptions/EconModel_Models.pdf","Github"),
                 br(),br(),
                 "Skickar dina förslag till William English: we@nbrf.nu")
              )
@@ -805,7 +731,7 @@ ui <- fluidPage(
                      column(2, actionButton("help_storage_temp", "?"))
                      ),
                    selectInput("temp_clamp_model",isolate(values$EAD), choices = list("Moving average with floor"=1, "Air with floor"=2, "Air"=3, "Ventilated" = 4)),
-                   selectInput("temp_air_yr",isolate(values$EAE), choices = list("2022"="yr2022", "2021"="yr2021", "2020"="yr2020", "2019"="yr2019", "2018"="yr2018", "2017"="yr2017", "2016"="yr2016")),
+                   selectInput("temp_air_yr",isolate(values$EAE), choices = list("2022"="yr2022","2021"="yr2021","2020"="yr2020", "2019"="yr2019", "2018"="yr2018", "2017"="yr2017", "2016"="yr2016")),
                    sliderInput("clamp_size", isolate(values$EAF), step = 0.1, min=7, max=9, value=8),
                    sliderInput("ref_temp", isolate(values$EAG), min=0, max=10, value=2)
                  ),
@@ -840,11 +766,11 @@ ui <- fluidPage(
                      column(2,actionButton("help_delivery", "?"))
                      ),
                    dateInput("delivery_date",isolate(values$FAC),value = "2023-01-15"),
-                   sliderInput("delivery_distance",isolate(values$FAD),min=1,max=15,step=0.1,value=5)
-                   #sliderInput("delivery_cost",isolate(values$FAE),min=0,max=200000,value=0)
+                   sliderInput("delivery_distance",isolate(values$FAD),min=1,max=20,step=0.1,value=5),
+                   sliderInput("delivery_cost",isolate(values$FAE),min=1000,max=200000,value=5000)
                  ),
                  mainPanel(
-                   column(12, h4(isolate(values$FAF)), tableOutput("delivery_cost_tab"), style = "margin-top: 15px")
+                   column(12, h4(isolate(values$FAF)), tableOutput("delivery_cost_tab"), style = "margin-top: 125px")
                  )
                )
              
@@ -878,7 +804,7 @@ ui <- fluidPage(
                      column(10,h4(isolate(values$GAH))),
                      column(2,actionButton("help_payment", "?"))
                    ),
-                   numericInput("price", isolate(values$GAI), value=308),
+                   numericInput("price", isolate(values$GAI), value=313),
                    #checkboxInput("vol",isolate(values$GAJ), value = F),
                    selectInput("vol",isolate(values$GAJ), 
                                choices = list(">90% (€1.8)"=1, 
@@ -920,7 +846,7 @@ ui <- fluidPage(
              ),
              fluidRow(
                column(6,plotly::plotlyOutput("summary_graph_renhet")),
-               column(6,plotly::plotlyOutput("summary_graph_orenhet")),
+               column(6,),
                style = 'margin-top:30px'
              )
     ),
@@ -928,7 +854,7 @@ ui <- fluidPage(
              fluid = T, style = "padding-top:5px",
              fluidRow(
                column(6,plotly::plotlyOutput("summary_graph_price_ha")),
-               column(6,plotly::plotlyOutput("summary_graph_price_ha_net"))
+               column(6,plotly::plotlyOutput("summary_graph_price_fi"))
              ),
              fluidRow(
                column(6,plotly::plotlyOutput("summary_graph_price_cl")),
@@ -953,10 +879,10 @@ ui <- fluidPage(
                       plotly::plotlyOutput("summary_graph_sug_comp_2"),
                       br(),
                       tableOutput("comp_2_tab"))
+               )
              )
-          )
     )
-  )
+)
 
 
 # shinyApp(ui=ui, server=server)
@@ -989,13 +915,13 @@ server <- function(input, output, session){
     harvest_date_p <- input$harvest_date
     delivery_date_p <- input$delivery_date
     
-    root_mass_factory_ha <- full_tab_p$mass_t_cum[which(full_tab_p$date_full == as.POSIXct(delivery_date_p))]
-    root_mass_harvest_ha <- full_tab_p$mass_t_cum[which(full_tab_p$date_full == as.POSIXct(harvest_date_p))] 
-    root_mass_grown_ha <- full_tab_p$mass_t_cum[which(full_tab_p$date_full == (as.POSIXct(harvest_date_p) - 86400))]
+    root_mass_factory <- full_tab_p$mass_tn_cum[which(full_tab_p$date_full == as.POSIXct(delivery_date_p))]
+    root_mass_harvest <- full_tab_p$mass_tn_cum[which(full_tab_p$date_full == as.POSIXct(harvest_date_p))] 
+    root_mass_grown <- full_tab_p$mass_tn_cum[which(full_tab_p$date_full == (as.POSIXct(harvest_date_p) - 86400))]
     
-    root_mass_factory_field <- root_mass_factory_ha*field_size_p
-    root_mass_harvest_field <- root_mass_harvest_ha*field_size_p
-    root_mass_grown_field <- root_mass_grown_ha*field_size_p
+    root_mass_factory_field <- root_mass_factory*field_size_p
+    root_mass_harvest_field <- root_mass_harvest*field_size_p
+    root_mass_grown_field <- root_mass_grown*field_size_p
     
     pol_factory <- full_tab_p$pol_cum[which(full_tab_p$date_full == as.POSIXct(delivery_date_p))]
     pol_harvest <- full_tab_p$pol_cum[which(full_tab_p$date_full == as.POSIXct(harvest_date_p))] 
@@ -1004,23 +930,13 @@ server <- function(input, output, session){
     sug_factory <- full_tab_p$sug_cum[which(full_tab_p$date_full == as.POSIXct(delivery_date_p))]
     sug_harvest <- full_tab_p$sug_cum[which(full_tab_p$date_full == as.POSIXct(harvest_date_p))] 
     sug_grown <- full_tab_p$sug_cum[which(full_tab_p$date_full == (as.POSIXct(harvest_date_p) - 86400))]
-    
-    ren_factory <- full_tab_p$renhet_pp_cum[which(full_tab_p$date_full == as.POSIXct(delivery_date_p))]
-    ren_harvest <- full_tab_p$renhet_pp_cum[which(full_tab_p$date_full == as.POSIXct(harvest_date_p))] 
-    ren_grown <- full_tab_p$renhet_pp_cum[which(full_tab_p$date_full == (as.POSIXct(harvest_date_p) - 86400))]
         
-    oren_factory <- full_tab_p$mass_oren_t_ha_cum[which(full_tab_p$date_full == as.POSIXct(delivery_date_p))]
-    oren_harvest <- full_tab_p$mass_oren_t_ha_cum[which(full_tab_p$date_full == as.POSIXct(harvest_date_p))] 
-    oren_grown <- full_tab_p$mass_oren_t_ha_cum[which(full_tab_p$date_full == (as.POSIXct(harvest_date_p) - 86400))]
-    
     root_harvest_tab <- matrix(c(sug_grown, sug_harvest, sug_factory,
                                  pol_grown, pol_harvest, pol_factory,
-                                 root_mass_grown_ha, root_mass_harvest_ha, root_mass_factory_ha,
-                                 root_mass_grown_field, root_mass_harvest_field, root_mass_factory_field,
-                                 ren_grown, ren_harvest, ren_factory,
-                                 oren_grown, oren_harvest, oren_factory
+                                 root_mass_grown, root_mass_harvest, root_mass_factory,
+                                 root_mass_grown_field, root_mass_harvest_field, root_mass_factory_field
                                  ), byrow=F, nrow=3) 
-    colnames(root_harvest_tab) <- c(values$GTA, values$GTB, values$GTC, values$GTD, values$GTO, "Orenheter (t/ha)")
+    colnames(root_harvest_tab) <- c(values$GTA, values$GTB, values$GTC, values$GTD)
     rownames(root_harvest_tab) <- c(values$GTE, values$GTF, values$GTG)
     
     root_harvest_tab
@@ -1029,8 +945,8 @@ server <- function(input, output, session){
   # LOCATION OF BEETS TABLE
   loc_tab <- reactive({
 
-    harvest_date <- as.POSIXct(input$harvest_date, tz = "UTC", format = "%Y-%m-%d")
-    delivery_date <- as.POSIXct(input$delivery_date, tz = "UTC", format = "%Y-%m-%d")
+    harvest_date <- as.POSIXct(input$harvest_date, tz = time_zone, format = "%Y-%m-%d")
+    delivery_date <- as.POSIXct(input$delivery_date, tz = time_zone, format = "%Y-%m-%d")
     location <- values$ATC
     
     # Full table of location of beets
@@ -1184,60 +1100,29 @@ server <- function(input, output, session){
   })
   
   # Delivery cost table
-
-  delivery_cost_tab <- reactive({
+  
+  output$delivery_cost_tab <- renderTable({
     root_harvest_tab_p <- data.frame(root_harvest_tab())
-    delivery_distance_mil_p <- input$delivery_distance
-    field_size_p <- input$field_size
+    root_harvest_p <- root_harvest_tab_p[3,4]
+    root_yield_p <- root_harvest_tab_p[3,3]
     
-    ren_factory_p <- root_harvest_tab_p[3,5]
-    root_mass_factory_ha_ren <- root_harvest_tab_p[3,3]
-    root_mass_factory_field_ren <- root_harvest_tab_p[3,4]
-    
-    root_mass_factory_ha_oren <- root_mass_factory_ha_ren * (100 - ren_factory_p) / ren_factory_p
-    root_mass_factory_ha_tot <- root_mass_factory_ha_ren / (ren_factory_p / 100)
-    root_mass_factory_field_oren <- root_mass_factory_field_ren * (100 - ren_factory_p) / ren_factory_p
-    root_mass_factory_field_tot <- root_mass_factory_field_ren / (ren_factory_p / 100)
-    
-    delivery_distance_oren_km <- delivery_distance_mil_p*10
-    lev_oren_sek <- lev_tab$lev_sek[which(lev_tab$lev_km == delivery_distance_oren_km)]
-    
-    delivery_distance_ren_mil <- round(delivery_distance_mil_p - 8,1)
-    delivery_distance_ren_mil <- ifelse(delivery_distance_ren_mil <= 0, 0, delivery_distance_ren_mil)
-    delivery_distance_ren_km <- delivery_distance_ren_mil * 10
-    lev_ren_sek <- lev_tab$lev_sek[which(lev_tab$lev_km == delivery_distance_ren_km)]
-    
-    sek_oren_tot <- lev_oren_sek * root_mass_factory_field_oren
-    sek_ren_tot <- lev_ren_sek * root_mass_factory_field_ren
-    sek_tot_tot <- sek_oren_tot + sek_ren_tot
-    
-    sek_oren_ha <- sek_oren_tot / field_size_p
-    sek_ren_ha <- sek_ren_tot / field_size_p
-    sek_tot_ha <- sek_tot_tot / field_size_p
-    
-    sek_oren_tn <- lev_oren_sek
-    sek_ren_tn <- sek_ren_tot / root_mass_factory_field_ren
-    sek_tot_tn <- sek_tot_tot / root_mass_factory_field_ren
-    
-    sek_oren_mil <- sek_oren_tot / delivery_distance_mil_p
-    sek_ren_mil <- sek_ren_tot / delivery_distance_ren_mil
-    sek_ren_mil <- ifelse(is.na(sek_ren_mil), 0, sek_ren_mil)
-    sek_tot_mil <- sek_tot_tot / delivery_distance_mil_p
-    
-    delivery_cost_tab <- matrix(c(
-      root_mass_factory_field_oren, root_mass_factory_field_ren, root_mass_factory_field_tot,
-      root_mass_factory_ha_oren, root_mass_factory_ha_ren, root_mass_factory_ha_tot,
-      delivery_distance_mil_p, delivery_distance_ren_mil, delivery_distance_mil_p,
-      sek_oren_tot, sek_ren_tot, sek_tot_tot,
-      sek_oren_ha, sek_ren_ha, sek_tot_ha,
-      sek_oren_tn, sek_ren_tn, sek_tot_tn,
-      sek_oren_mil, sek_ren_mil, sek_tot_mil
-      ), byrow=T, nrow=7) 
-    colnames(delivery_cost_tab) <- c(values$FTA, values$FTB, values$FTC)    
-    rownames(delivery_cost_tab) <- c(values$FTD, values$FTE, values$FTF, values$FTG, values$FTH, values$FTI, values$FTJ)
+    delivery_cost_field_clean <- input$delivery_cost / (input$renhet/100)
+    delivery_cost_field_soil <- input$delivery_cost * (1 - (input$renhet/100))
+    delivery_tn_mil <- root_yield_p / input$delivery_distance
+    delivery_cost_mil <- input$delivery_cost / input$delivery_distance
+    delivery_cost_mil_clean <- delivery_cost_mil / (input$renhet/100)
+    delivery_cost_mil_soil <- delivery_cost_mil * (1 - (input$renhet/100))
+    delivery_cost_tn <- input$delivery_cost / root_harvest_p
+    delivery_cost_tn_clean <- delivery_cost_tn / (input$renhet/100)
+    delivery_cost_tn_soil <- delivery_cost_tn * (1 - (input$renhet/100))
+    delivery_cost_tab <- matrix(c(root_harvest_p, input$delivery_cost, delivery_cost_field_clean, delivery_cost_field_soil,
+                                  delivery_tn_mil, delivery_cost_mil, delivery_cost_mil_clean, delivery_cost_mil_soil,
+                                  1, delivery_cost_tn, delivery_cost_tn_clean, delivery_cost_tn_soil), byrow=T, nrow=3) 
+    rownames(delivery_cost_tab) <- c(values$FTA, values$FTB, values$FTC)
+    colnames(delivery_cost_tab) <- c(values$FTD,values$FTE,values$FTF, values$FTG)
     delivery_cost_tab
-  })
-
+  }, rownames = T, digits=1
+  )
   
   # FULL RESULTS TABLE
 
@@ -1251,10 +1136,10 @@ server <- function(input, output, session){
     LSG_tab_p <- data.frame(LSG_tab())
     
     # input from required inputs
-    harvest_date <- as.POSIXct(input$harvest_date, tz = "UTC", format = "%Y-%m-%d")
-    delivery_date <- as.POSIXct(input$delivery_date, tz = "UTC", format = "%Y-%m-%d")
-    cover_date <- as.POSIXct(input$cover_date, tz = "UTC", format = "%Y-%m-%d")
-    day0 <-  as.POSIXct(input$prod_data_date, tz = "UTC", format = "%Y-%m-%d")
+    harvest_date <- as.POSIXct(input$harvest_date, tz = time_zone, format = "%Y-%m-%d")
+    delivery_date <- as.POSIXct(input$delivery_date, tz = time_zone, format = "%Y-%m-%d")
+    cover_date <- as.POSIXct(input$cover_date, tz = time_zone, format = "%Y-%m-%d")
+    day0 <-  as.POSIXct(input$prod_data_date, tz = time_zone, format = "%Y-%m-%d")
     kr_tonne <- input$price
     renhet_p <- input$renhet/100
     pol_p <- input$pol
@@ -1263,8 +1148,6 @@ server <- function(input, output, session){
     field_size <- input$field_size
     root_harvest <- root_yield_p*field_size
     root_tip_break_pc_p <- input$root_tip_break_pc
-    delivery_distance_mil_p <- input$delivery_distance
-    sek_ren_tot_p <- input$delivery_cost
     
     # calculate a few key parameters
     days_h_s <- round(as.numeric(difftime(delivery_date, harvest_date, units="days")+1))
@@ -1338,10 +1221,10 @@ server <- function(input, output, session){
     
     ## Total daily mass change (kg)
     full_tab$mass_loss_kg_rel_day0 <- full_tab$clamp_mass_loss_kg_rel_day0 + full_tab$LSG_mass_loss_kg_rel_day0 - full_tab$harvest_mass_loss
-    full_tab$mass_t_cum <- (root_yield_p - full_tab$mass_loss_kg_rel_day0)*full_tab$renhet_pc_cum
+    full_tab$mass_tn_cum <- (root_yield_p - full_tab$mass_loss_kg_rel_day0)*full_tab$renhet_pc_cum
     
     ## SUGAR YIELD
-    full_tab$sug_cum <- full_tab$pol_cum/100*full_tab$mass_t_cum
+    full_tab$sug_cum <- full_tab$pol_cum/100*full_tab$mass_tn_cum
     
     #TT bonus
     full_tab$price_TT[full_tab$date_full < as.POSIXct(cover_date)+7] <- 0
@@ -1351,46 +1234,30 @@ server <- function(input, output, session){
     if (vol == 2) full_tab$price_vol = kr_vol_80
     if (vol == 3) full_tab$price_vol = 0
     
-    #renhet bonus
+    #renhet bonus #### FIX FIX FIX FIX ####
     full_tab$renhet_diff <- full_tab$renhet_pp_cum - (ref_renhet*100)
     full_tab$price_renhet <- full_tab$renhet_diff * kr_renhet
-    
-    # Orenheter costs
-    full_tab$mass_oren_t_ha_cum <- full_tab$mass_t_cum * (100 - full_tab$renhet_pp_cum) / full_tab$renhet_pp_cum
-    full_tab$cost_lev_oren_ha_cum <- full_tab$mass_oren_t_ha_cum*(delivery_distance_mil_p*10*0.841+23.74)
-    
-    # Leverans costs
-    full_tab$cost_lev_ren_ha_cum <- full_tab$mass_t_cum*((delivery_distance_mil_p - 8)*10*0.841+23.74)
-    full_tab$cost_lev_ren_ha_cum[which(full_tab$cost_lev_ren_ha_cum < 0)] <- 0
-    full_tab$cost_lev_ha_cum <- (full_tab$cost_lev_oren_ha_cum + full_tab$cost_lev_ren_ha_cum)*-1
     
     # Clean prices
     full_tab$price_base_clean <- kr_tonne+kr_tonne*full_tab$pol_factor/100
     full_tab$price_bonus_clean <- (full_tab$price_early + full_tab$price_late + full_tab$price_TT + full_tab$price_vol + full_tab$price_renhet)
     full_tab$price_clean <- full_tab$price_base_clean +  full_tab$price_bonus_clean
-    full_tab$cost_lev_t_clean_cum <- full_tab$cost_lev_ha_cum / full_tab$mass_t_cum
     
     # Delivered prices
     full_tab$price_base_delivered <- full_tab$price_base_clean*(full_tab$renhet_pp_cum/100)
     full_tab$price_bonus_delivered <- full_tab$price_bonus_clean*(full_tab$renhet_pp_cum/100)
     full_tab$price_delivered <- full_tab$price_clean*(full_tab$renhet_pp_cum/100)
-    full_tab$cost_lev_t_delivered_cum <- full_tab$cost_lev_t_clean_cum*(full_tab$renhet_pp_cum/100)
     
     # Ha prices
-    full_tab$price_base_ha <- full_tab$price_base_clean*full_tab$mass_t_cum
-    full_tab$price_bonus_ha <- full_tab$price_bonus_clean*full_tab$mass_t_cum
-    full_tab$price_ha <- full_tab$price_clean*full_tab$mass_t_cum
+    full_tab$price_base_ha <- full_tab$price_base_clean*full_tab$mass_tn_cum
+    full_tab$price_bonus_ha <- full_tab$price_bonus_clean*full_tab$mass_tn_cum
+    full_tab$price_ha <- full_tab$price_clean*full_tab$mass_tn_cum
 
     # Field prices
     full_tab$price_base_field <- full_tab$price_base_ha*field_size
     full_tab$price_bonus_field <- full_tab$price_bonus_ha*field_size
     full_tab$price_field <- full_tab$price_ha*field_size
-    full_tab$cost_lev_field_cum <- full_tab$cost_lev_ha_cum*field_size
-    
-    # Ha prices net of delivery and without the TopTex Bonus
-    full_tab$price_bonus_ha_net <- full_tab$price_bonus_clean*full_tab$mass_t_cum - full_tab$price_TT*full_tab$mass_t_cum
-    full_tab$price_ha_net <- full_tab$price_clean*full_tab$mass_t_cum + full_tab$cost_lev_ha_cum - full_tab$price_TT*full_tab$mass_t_cum
-    
+
     full_tab
     
     })
@@ -1405,11 +1272,11 @@ server <- function(input, output, session){
     summary_tab_cols <- input$summary_tab_show
     summary_tab_start <- input$data_restrict_start
     summary_tab_end <- input$data_restrict_end
-    harvest_date <- as.POSIXct(input$harvest_date, tz = "UTC", format = "%Y-%m-%d")
-    delivery_date <- as.POSIXct(input$delivery_date, tz = "UTC", format = "%Y-%m-%d")
+    harvest_date <- as.POSIXct(input$harvest_date, tz = time_zone, format = "%Y-%m-%d")
+    delivery_date <- as.POSIXct(input$delivery_date, tz = time_zone, format = "%Y-%m-%d")
     
     # Define summary table - columns
-    summary_tab_show <- c("date_full", "location", "temp_clamp_p", "cum_temp", "pol_loss_pc_cum", "pol_cum","mass_t_cum","sug_cum", "renhet_pp_cum","mass_oren_t_ha_cum")
+    summary_tab_show <- c("date_full", "location", "temp_clamp_p", "cum_temp", "pol_loss_pc_cum", "pol_cum","mass_tn_cum","sug_cum", "renhet_pp_cum")
     if("CL" %in% summary_tab_cols) summary_tab_show <- c(summary_tab_show, "price_base_clean","price_bonus_clean","price_clean")
     if("DE" %in% summary_tab_cols) summary_tab_show <- c(summary_tab_show, "price_base_delivered","price_bonus_delivered","price_delivered")
     if("HA" %in% summary_tab_cols) summary_tab_show <- c(summary_tab_show, "price_base_ha","price_bonus_ha","price_ha")
@@ -1422,8 +1289,8 @@ server <- function(input, output, session){
     summary_tab <- summary_tab[which(summary_tab$date_full <= last_day),]
 
     # Extract a little info from summary table for later graphing
-    delivery_date <<- as.POSIXct(input$delivery_date, tz = "UTC", format = "%Y-%m-%d")
-    harvest_date <<- as.POSIXct(input$harvest_date, tz = "UTC", format = "%Y-%m-%d")
+    delivery_date <<- as.POSIXct(input$delivery_date, tz = time_zone, format = "%Y-%m-%d")
+    harvest_date <<- as.POSIXct(input$harvest_date, tz = time_zone, format = "%Y-%m-%d")
     cum_loss_delivery <<- summary_tab$cum_temp[summary_tab$date_full==delivery_date]
     loss_max <- max(summary_tab$pol_loss_pc_cum)
     pol_max <- max(summary_tab$pol_cum)
@@ -1443,7 +1310,7 @@ server <- function(input, output, session){
     # input from required inputs
     summary_tab_cols <- input$summary_tab_show
     
-    summary_tab_names <- c(values$HTA, values$HTB, values$HTC, values$HTD, values$HTE, values$HTF, values$HTG, values$HTH, values$HTU, values$HTV)
+    summary_tab_names <- c(values$HTA, values$HTB, values$HTC, values$HTD, values$HTE, values$HTF, values$HTG, values$HTH, values$HTU)
     if("CL" %in% summary_tab_cols) summary_tab_names <- c(summary_tab_names, values$HTI, values$HTJ, values$HTK)
     if("DE" %in% summary_tab_cols) summary_tab_names <- c(summary_tab_names, values$HTL, values$HTM, values$HTN)
     if("HA" %in% summary_tab_cols) summary_tab_names <- c(summary_tab_names, values$HTO, values$HTP, values$HTQ)
@@ -1460,16 +1327,16 @@ server <- function(input, output, session){
   
   # Summary Table of the bottom line
   summary_final_tab = reactive({
-    delivery_date <- as.POSIXct(input$delivery_date, tz = "UTC", format = "%Y-%m-%d")
+    delivery_date <- as.POSIXct(input$delivery_date, tz = time_zone, format = "%Y-%m-%d")
     summary_final_tab <- data.frame(full_tab())
     summary_final_tab <- summary_final_tab[which(summary_final_tab$date_full == delivery_date),]
-    summary_final_tab <- matrix(summary_final_tab[c("price_base_ha","price_bonus_ha","price_ha","cost_lev_ha_cum",
-                                                    "price_base_field","price_bonus_field","price_field","cost_lev_field_cum",
-                                                    "price_base_delivered","price_bonus_delivered","price_delivered","cost_lev_t_delivered_cum",
-                                                    "price_base_clean","price_bonus_clean","price_clean","cost_lev_t_clean_cum")],
+    summary_final_tab <- matrix(summary_final_tab[c("price_base_ha","price_bonus_ha","price_ha",
+                                                    "price_base_field","price_bonus_field","price_field",
+                                                    "price_base_delivered","price_bonus_delivered","price_delivered",
+                                                    "price_base_clean","price_bonus_clean","price_clean")],
                                 byrow=T,nrow=4)
     rownames(summary_final_tab) <- c(values$GTH, values$GTI,values$GTJ, values$GTK)
-    colnames(summary_final_tab) <- c(values$GTL, values$GTM, values$GTN, "Leveranskostnader")
+    colnames(summary_final_tab) <- c(values$GTL, values$GTM, values$GTN)
     
     summary_final_tab
     
@@ -1477,7 +1344,7 @@ server <- function(input, output, session){
   
   prod_data_loc = reactive({
     summary_tab_p <- summary_tab()
-    prod_data_date_p <- as.POSIXct(input$prod_data_date, tz = "UTC", format = "%Y-%m-%d")
+    prod_data_date_p <- as.POSIXct(input$prod_data_date, tz = time_zone, format = "%Y-%m-%d")
     
     prod_data_loc <- summary_tab_p$location[which(summary_tab_p$date_full == prod_data_date_p)]
 
@@ -1485,8 +1352,8 @@ server <- function(input, output, session){
   })
   
   dates <- reactive({
-    delivery_date <- as.POSIXct(input$delivery_date, tz = "UTC", format = "%Y-%m-%d")
-    harvest_date <- as.POSIXct(input$harvest_date, tz = "UTC", format = "%Y-%m-%d")
+    delivery_date <- as.POSIXct(input$delivery_date, tz = time_zone, format = "%Y-%m-%d")
+    harvest_date <- as.POSIXct(input$harvest_date, tz = time_zone, format = "%Y-%m-%d")
   })
   ###############
   # VISUALS
@@ -1509,11 +1376,6 @@ server <- function(input, output, session){
   output$root_harvest_tab <- renderTable({
     root_harvest_tab()
   }, rownames = T)
-  
-  #Summary delivery
-  output$delivery_cost_tab <- renderTable({
-   delivery_cost_tab()
-  }, rownames = T, digits=1)
   
   # Summary price table
   output$summary_tab_output = renderTable({
@@ -1619,7 +1481,7 @@ server <- function(input, output, session){
 
   output$summary_graph_mass <- plotly::renderPlotly({
     ggplot(summary_tab(), aes(x=date_full)) + 
-      geom_line(aes(y=mass_t_cum, color = values$IDJ), size = 1) +
+      geom_line(aes(y=mass_tn_cum, color = values$IDJ), size = 1) +
       geom_vline(xintercept = as.numeric(delivery_date), linetype="dotted") +
       geom_vline(xintercept = as.numeric(harvest_date), linetype="dotted") +
       scale_colour_manual("", 
@@ -1663,21 +1525,6 @@ server <- function(input, output, session){
             legend.position="bottom")
   })
   
-  output$summary_graph_orenhet <- plotly::renderPlotly({
-    ggplot(summary_tab(), aes(x=date_full)) + 
-      geom_line(aes(y=mass_oren_t_ha_cum, color = "Orenheter"), size = 1) +
-      geom_vline(xintercept = as.numeric(delivery_date), linetype="dotted") +
-      geom_vline(xintercept = as.numeric(harvest_date), linetype="dotted") +
-      scale_colour_manual("", 
-                          breaks = c("Orenheter"),
-                          values = c("Orenheter"="#1C9C82")) +
-      ylab("Ton/ha") + 
-      xlab(values$IDT) +
-      labs(title = "ORENHETER") +
-      theme(plot.title = element_text(size=15, face="bold.italic", colour = "#4A4C64"), 
-            legend.position="bottom")
-  })
-  
   output$summary_graph_price_ha <- plotly::renderPlotly({
     ggplot(full_tab(), aes(x=date_full)) + 
       geom_line(aes(y = price_base_ha, colour = values$JDA), size = 1) + 
@@ -1690,25 +1537,6 @@ server <- function(input, output, session){
                           values = c("Totalpris"="red3", "Baspris"="#4A4C64", 
                                      "Bonus"="#1C9C82")) +
       labs(title = values$JDF) + 
-      ylab(values$JDE) +
-      xlab(values$JDD) +
-      theme(plot.title = element_text(size=15, face="bold.italic", colour = "#4A4C64"), 
-            legend.position="bottom")
-  })
-  
-  output$summary_graph_price_ha_net <- plotly::renderPlotly({
-    ggplot(full_tab(), aes(x=date_full)) + 
-      geom_line(aes(y = price_base_ha, colour = values$JDA), size = 1) + 
-      geom_line(aes(y = price_bonus_ha_net, colour = values$JDB), size = 1) +
-      geom_line(aes(y = price_ha_net, colour = values$JDC), size = 1) +
-      geom_line(aes(y = cost_lev_ha_cum, colour = "Leverans"), size = 1) +
-      geom_vline(xintercept = as.numeric(delivery_date), linetype="dotted") +
-      geom_vline(xintercept = as.numeric(harvest_date), linetype="dotted") +
-      scale_colour_manual("", 
-                          breaks = c(values$JDA, values$JDB, values$JDC, "Leverans"),
-                          values = c("Totalpris"="red3", "Baspris"="#4A4C64", 
-                                     "Bonus"="#1C9C82", "Leverans" = "orange")) +
-      labs(title = "INTÄKT PER HA NET LEVERANSKOSTNADER UTAN TT-BONUS") + 
       ylab(values$JDE) +
       xlab(values$JDD) +
       theme(plot.title = element_text(size=15, face="bold.italic", colour = "#4A4C64"), 
