@@ -322,7 +322,7 @@ values <- reactiveValues()
 
 {
   language_tab <- matrix(c(
-    "AAA", "SUGAR BEET HARVEST AND STORAGE - 2022 SWEDEN", "SKÖDE OCH LAGRING AV SOCKERBETOR - SVERIGE 2022",
+    "AAA", "SUGAR BEET HARVEST AND STORAGE - 2022 SWEDEN", "SKÖRD OCH LAGRING AV SOCKERBETOR - SVERIGE 2022",
     "ATA", "Field", "Fält",
     "ATB", "Harvest", "Upptagning",
     "ATC", "Clamp", "Stuka",
@@ -1962,6 +1962,12 @@ server <- function(input, output, session){
     values$root_harvest_y_lim <- max(c(values$root_harvest_1_y_lim, values$root_harvest_2_y_lim))
     root_harvest_tab_i
   })
+  comp_1_delivery_date <<- eventReactive(input$comp_1,{
+    as.POSIXct(input$delivery_date, tz = "UTC", format = "%Y-%m-%d")})
+  
+  comp_1_harvest_date <<- eventReactive(input$comp_1,{
+    as.POSIXct(input$harvest_date, tz = "UTC", format = "%Y-%m-%d")})
+  
   
   output$comp_1_tab = renderTable({
       comp_1_tab()
@@ -1973,8 +1979,8 @@ server <- function(input, output, session){
   output$summary_graph_sug_comp_1 <- plotly::renderPlotly({
     ggplot(comp_1_tab_graph(), aes(x=date_full)) + 
       geom_line(aes(y=sug_cum, color = values$KDA)) +
-      geom_vline(xintercept = as.numeric(delivery_date), linetype="dotted") +
-      geom_vline(xintercept = as.numeric(harvest_date), linetype="dotted") +
+      geom_vline(xintercept = as.numeric(comp_1_delivery_date()), linetype="dotted") +
+      geom_vline(xintercept = as.numeric(comp_1_harvest_date()), linetype="dotted") +
       scale_colour_manual("", 
                           breaks = c(values$KDA),
                           values = c("Acc. sug"="red3")) +
@@ -1997,6 +2003,10 @@ server <- function(input, output, session){
     values$root_harvest_y_lim <- max(c(values$root_harvest_1_y_lim, values$root_harvest_2_y_lim))
     root_harvest_tab_i
   })
+  comp_2_delivery_date <<- eventReactive(input$comp_2,{
+    as.POSIXct(input$delivery_date, tz = "UTC", format = "%Y-%m-%d")})
+  comp_2_harvest_date <<- eventReactive(input$comp_2,{
+    as.POSIXct(input$harvest_date, tz = "UTC", format = "%Y-%m-%d")})
 
   output$comp_2_tab = renderTable({
     comp_2_tab()
@@ -2008,8 +2018,8 @@ server <- function(input, output, session){
   output$summary_graph_sug_comp_2 <- plotly::renderPlotly({
     ggplot(comp_2_tab_graph(), aes(x=date_full)) + 
       geom_line(aes(y=sug_cum, color = values$KDA)) +
-      geom_vline(xintercept = as.numeric(delivery_date), linetype="dotted") +
-      geom_vline(xintercept = as.numeric(harvest_date), linetype="dotted") +
+      geom_vline(xintercept = as.numeric(comp_2_delivery_date()), linetype="dotted") +
+      geom_vline(xintercept = as.numeric(comp_2_harvest_date()), linetype="dotted") +
       scale_colour_manual("", 
                           breaks = c(values$KDA),
                           values = c("Acc. sug"="red3")) +
