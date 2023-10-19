@@ -2,7 +2,7 @@
 #
 # Swedish sugar beets economic model, Historical weather data
 # Will English, 2021-03-18
-# Version 2021-11-11 R v4.1.2, snapshot 2021-11-01
+# Version 2023-10-19 R v4.3.1, snapshot 2023-08-01
 #
 ########################################
 
@@ -15,8 +15,8 @@
 
 {
   # -------------------------------------------
-  snapshot_date = "2021-11-01"
-  options("repos" = paste0("https://mran.revolutionanalytics.com/snapshot/", snapshot_date))
+  snapshot_date = "2023-08-01"
+  options("repos" = paste0("https://packagemanager.posit.co/cran/", snapshot_date))
   # -------------------------------------------
   
   # -------------------------------------------
@@ -41,13 +41,13 @@
                         "readxl_1.3.1",
                         "jsonlite_1.7.2"
   )
-  path_Rpackages = "C:/R packages_412"
+  path_Rpackages = "C:/R packages_431"
   # -------------------------------------------
   
   # version check and load packages
   # -------------------------------------------
   # R version check
-  if(sessionInfo()$R.version$version.string != "R version 4.1.2 (2021-11-01)") stop("R.version must be 4.1.2 (2021-11-01)")
+  if(sessionInfo()$R.version$version.string != "R version 4.3.1 (2023-06-16 ucrt)") stop("R.version must be 4.3.1 (2023-06-16 ucrt)")
   
   # install packages
   Rpack = sapply(strsplit(Rpackages_version, "_", fixed = T), FUN = function(x) x[1])
@@ -72,12 +72,12 @@
 ## Data to collect from LantMet and Meteometics
 ### TIME AND TIME ZONES
 time_zone <- "Europe/Copenhagen"
-startdate <- ISOdatetime(year = as.integer("2021",'%Y'),
+startdate <- ISOdatetime(year = as.integer("2022",'%Y'),
                          month = as.integer("09",'%m'),
                          day = as.integer("10",'%d'),
                          hour = 00, min = 00, sec = 00, tz = "UTC") #DK format
 startDate <- date(startdate)                                        #SE format
-enddate <- ISOdatetime(year = as.integer("2022",'%Y'),
+enddate <- ISOdatetime(year = as.integer("2023",'%Y'),
                        month = as.integer("02",'%m'),
                        day = as.integer("28",'%d'),
                        hour = 00, min = 00, sec = 00, tz = "UTC")   #DK format
@@ -136,6 +136,11 @@ for (i in 1:len_matrix){
 
 rm(dat_in_SE_i)
 
+# visual checks
+ggplot(data=dat_in_SE[which(dat_in_SE$WSTNID == 20947),], aes(x=DAY, y=TM, group=1)) +
+  geom_line()+
+  geom_point()
+
 dat_in_SE <- dat_in_SE %>%
   left_join(stations, by = "WSTNID") %>%
   mutate(source = "lantmet")
@@ -145,7 +150,7 @@ dat_sum <- dat_in_SE %>%
   summarise(mean = mean(TM)) %>%
   ungroup()
 
-write_xlsx(list(summary = dat_sum, full_data = dat_in_SE), "SE_2022.xlsx")
+write_xlsx(list(summary = dat_sum, full_data = dat_in_SE), "SE_2023.xlsx")
 
 dat_sum_vec <- unlist(dat_sum$mean)
 dat_sum_vec <- paste(round(dat_sum_vec,digits=1), collapse = ",")

@@ -3,10 +3,10 @@
 # Swedish sugar beets economic model
 # Will English, 2021-03-18
 #
-# Version 2022-10-13
-# This is the 2022 version of the model. Updates include:
+# Version 2023-10-17
+# This is the 2023 version of the model. Updates include:
 # - just one file: no "_pub" version (CRTL+SHFT+C in / out the Setup sections)
-# - 2022 price model, including 3 levels of volume/ market bonus
+# - 2023 price model, removal of the 3.65% admin avdrag on net weight.
 # - weather data imported for current year up to yesterday, with the rest of the filled with the average 2016-21
 # - minor coding updates that hopefully save micro seconds
 #
@@ -24,8 +24,8 @@ mode <- modes[w]
 
 if(mode == "develop"){
  # -------------------------------------------
- snapshot_date = "2021-11-01"
- options("repos" = paste0("https://mran.revolutionanalytics.com/snapshot/", snapshot_date))
+ snapshot_date = "2023-08-01"
+ options("repos" = paste0("https://packagemanager.posit.co/cran/", snapshot_date))
  # -------------------------------------------
 
  # -------------------------------------------
@@ -42,7 +42,7 @@ if(mode == "develop"){
                        "lubridate_1.8.0",
                        "tidyr_1.1.4"
                        )
- path_Rpackages = "C:/R packages_412"
+ path_Rpackages = "C:/R packages_431"
  # -------------------------------------------
  
  # -------------------------------------------
@@ -52,7 +52,7 @@ if(mode == "develop"){
  # version check and load packages
  # -------------------------------------------
  # R version check
- if(sessionInfo()$R.version$version.string != "R version 4.1.2 (2021-11-01)") stop("R.version must be 4.1.2 (2021-11-01)")
+ if(sessionInfo()$R.version$version.string != "R version 4.3.1 (2023-06-16 ucrt)") stop ("R.version must be 4.3.1 (2023-06-16)")
 
  # install packages
  Rpack = sapply(strsplit(Rpackages_version, "_", fixed = T), FUN = function(x) x[1])
@@ -97,33 +97,35 @@ if(mode == "publish"){
 #
 ###############################################
 
+gc()
+
 ## CONTRACT = Prices per tonne
-sek_eur <- 10.7842 # source: "Eurokursen 2022", på sockerbetor.nu 5 oktober 2022
-kr_tonne <- 30.1*sek_eur # 1-year fixed price, at reference pol of 17%
-kr_renhet <- 2 # extra kr per %-point over ref (89.5%), at 17% pol%
-kr_pol <- 9 # extra % per %-point over ref of 17% pol (usually given as % per 0.1% - here, times 10)
-kr_TT <- 5 # for the use of TopTex for at least 7 days prior to delivery, for delivery after 15 November
-kr_vol <- 5 # extra per tonne if area increases 10%. This is SEK (actual bonus is 0,5 EUR/t)
-kr_vol_90 <- 1.80*sek_eur # source: "Information kring kontrakteringen", på sockerbetor.nu 20 augusti 2021
-kr_vol_80 <- 1.40*sek_eur # source: "Information kring kontrakteringen", på sockerbetor.nu 20 augusti 2021
+sek_eur <- 11.8457 # source: "Eurokursen 2023", på sockerbetor.nu 10 oktober 2023
+kr_tonne <- 42.40*sek_eur # 1-year fixed price, at reference pol of 17%
+kr_renhet <- 2 # extra kr per %-point over ref (89.5%), at 17% pol%. Source: Branchavtal 2023/24
+kr_pol <- 9 # extra % per %-point over ref of 17% pol (usually given as % per 0.1% - here, times 10). Source: Branchavtal 2023/24
+kr_TT <- 5 # for the use of TopTex for at least 7 days prior to delivery, for delivery after 15 November. 
+kr_vol <- 2.06 # € extra per tonne, as fraction of previous year.
+#kr_vol_90 <- 1.80*sek_eur # source: "Information kring kontrakteringen", på sockerbetor.nu 20 augusti 2021
+#kr_vol_80 <- 1.40*sek_eur # source: "Information kring kontrakteringen", på sockerbetor.nu 20 augusti 2021
 time_zone <- "UTC" #"Europe/Copenhagen"
-date_full <- seq(as.POSIXct("2022-09-10", tz = time_zone, format = "%Y-%m-%d"), length.out = 172, by = "1 day")
-price_early <- c(37,37,37,37,37,36,33,30,27,24,21,19,16,14,12,10,8,6,4,2,1,rep(0,151))
-price_late <- c(rep(0,82),seq(1,31,by=1),seq(32.5,120,by=1.5))
+date_full <- seq(as.POSIXct("2023-09-10", tz = time_zone, format = "%Y-%m-%d"), length.out = 172, by = "1 day")
+price_early <- c(37,37,37,37,37,36,33,30,27,24,21,19,16,14,12,10,8,6,4,2,1,rep(0,151)) #Source: Branchavtal 2023/24 - unchanged
+price_late <- c(rep(0,82),seq(1,23,by=1),seq(24.5,124,by=1.5)) #Source: Branchavtal 2023/24. Updated 2023
 price_TT <- c(rep(0,66),rep(5,8), rep(10,8), rep(15,90))
 price_vol <- rep(0,172)
 price_tab_contract <- data.frame(date_full,price_early, price_late, price_TT, price_vol)
 
 ## Reference values
-ref_hardness <- 50
-ref_pol <- 0.17
-ref_renhet <- 0.895
-ref_TT_1 <- as.POSIXct("2022-11-15", tz = time_zone, format = "%Y-%m-%d") # 5kr/tn beets
-ref_TT_2 <- as.POSIXct("2022-11-22", tz = time_zone, format = "%Y-%m-%d") # 10kr/tn beets
-ref_TT_3 <- as.POSIXct("2022-12-01", tz = time_zone, format = "%Y-%m-%d") # 15kr/tn beets
-ref_early <- as.POSIXct("2022-09-30", tz = time_zone, format = "%Y-%m-%d") # last day the early payment is made for
-ref_late_1 <- as.POSIXct("2022-12-01", tz = time_zone, format = "%Y-%m-%d") #first day you get money for late delivery
-ref_late_2 <- as.POSIXct("2023-01-01", tz = time_zone, format = "%Y-%m-%d") #first day you get 1.5 x money for late delivery
+ref_hardness <- 50 # Source: made-up
+ref_pol <- 0.17 #Source: Branchavtal 2023/24 - unchanged
+ref_renhet <- 0.9315 #Source: Branchavtal 2023/24
+ref_TT_1 <- as.POSIXct("2023-11-15", tz = time_zone, format = "%Y-%m-%d") # 5kr/tn beets
+ref_TT_2 <- as.POSIXct("2023-11-23", tz = time_zone, format = "%Y-%m-%d") # 10kr/tn beets
+ref_TT_3 <- as.POSIXct("2023-12-01", tz = time_zone, format = "%Y-%m-%d") # 15kr/tn beets
+ref_early <- as.POSIXct("2023-09-30", tz = time_zone, format = "%Y-%m-%d") # last day the early payment is made for
+ref_late_1 <- as.POSIXct("2023-12-01", tz = time_zone, format = "%Y-%m-%d") #first day you get money for late delivery
+ref_late_2 <- as.POSIXct("2023-12-24", tz = time_zone, format = "%Y-%m-%d") #first day you get 1.5 x money for late delivery
 cum_temp <- c(0,seq(1:1500))
 ref_medel_linear <- cum_temp*0.0188
 ref_medel_discont <- ifelse(cum_temp <= 270, cum_temp*0.013, 270*0.013+(cum_temp-270)*0.042)
@@ -141,12 +143,13 @@ temp_tab_historical <- data.frame(
   yr2018 = c(16.9,15.7,14.3,14.4,15.4,14.3,14.1,17.1,18.7,18.1,18.3,16.7,12.2,11.7,9.1,10.3,13.5,15.1,10.9,10.9,12.6,10.1,9.3,9.6,11.1,13.2,12.0,9.0,11.7,13.2,12.7,14.6,14.3,15.5,14.1,13.1,12.4,11.5,9.9,7.0,10.0,9.7,10.5,10.7,7.2,10.6,9.0,4.8,1.8,3.9,10.2,8.5,8.4,9.0,6.9,6.1,9.5,8.8,7.9,6.5,7.9,8.9,9.6,10.3,9.5,9.6,9.0,5.4,4.5,4.9,4.1,3.8,4.0,4.2,2.1,2.0,1.3,-2.6,-3.9,-1.1,1.9,2.7,5.2,5.5,8.2,5.8,4.0,4.1,8.3,6.8,6.1,4.7,3.7,1.5,0.1,1.2,1.5,0.6,0.1,1.8,3.5,3.6,4.4,0.6,-0.7,-1.2,5.2,5.9,7.4,6.0,6.3,4.2,3.8,6.5,1.7,1.4,4.3,2.8,0.5,4.1,4.1,0.5,-1.3,3.8,2.9,5.0,1.3,3.7,5.4,2.1,-1.1,0.0,0.1,0.7,0.3,-2.5,-2.3,-3.2,-1.5,1.1,2.3,1.0,0.6,0.9,0.8,1.5,0.8,1.3,3.9,2.8,3.7,5.0,5.5,4.6,3.0,2.4,5.9,5.8,3.4,4.6,5.9,4.7,5.1,5.8,5.8,0.7,2.4,4.4,4.9,5.5,6.1,4.9),
   yr2019 = c(16.1,15.7,16.0,15.3,14.4,14.7,13.4,10.7,10.7,10.4,11.6,13.1,12.8,12.3,12.9,13.3,13.8,14.4,13.6,13.6,12.2,9.6,9.1,6.8,6.8,5.7,3.6,2.3,8.5,11.8,11.3,12.2,12.5,12.2,12.3,12.2,11.7,12.2,12.8,12.2,12.0,11.2,12.2,11.1,11.1,12.7,13.6,10.8,8.0,2.7,3.1,7.2,5.8,7.7,9.6,8.3,4.2,2.5,3.4,6.7,5.4,4.8,5.5,5.4,4.5,4.9,6.2,8.5,6.9,9.0,7.2,7.8,8.4,8.4,6.7,6.7,5.9,5.8,7.4,8.4,2.8,2.8,3.0,2.6,3.0,6.9,6.5,7.0,6.9,7.3,6.3,2.4,5.0,4.3,4.1,4.1,5.2,6.0,6.6,6.6,5.1,5.9,6.2,5.1,6.1,6.0,4.7,2.6,0.1,-1.7,3.2,5.8,5.8,4.2,2.0,4.8,4.2,3.0,5.5,5.2,6.2,5.2,6.2,4.8,5.6,5.3,6.1,8.6,5.7,4.8,5.7,4.1,4.9,6.6,4.9,3.5,6.1,5.6,4.4,4.5,5.2,4.6,5.9,7.1,7.6,5.4,4.4,4.0,2.8,6.3,4.2,4.9,7.1,6.0,3.7,4.3,3.9,3.4,5.6,8.2,6.8,5.8,4.8,4.9,5.8,6.1,4.7,4.6,4.5,1.8,0.9,3.3),
   yr2020 = c(14.1,13.7,15.7,16.0,17.3,18.1,14.4,10.1,10.5,11.1,11.3,12.9,13.4,14.5,15.1,12.8,15.0,18.1,13.7,12.9,12.7,12.6,15.4,15.8,14.8,12.9,13.3,13.3,12.6,12.5,10.3,9.9,7.3,7.9,7.4,6.0,6.5,7.3,8.5,6.9,9.2,12.1,13.9,11.2,11.9,13.0,11.3,10.7,11.1,9.9,8.8,11.8,12.3,14.6,10.9,9.7,10.0,11.1,9.0,7.2,9.1,8.2,6.7,7.0,8.2,8.6,10.5,10.6,10.4,11.0,8.3,4.5,7.2,8.5,7.4,8.1,7.1,7.5,0.8,-0.5,0.1,1.3,3.8,3.4,1.4,2.9,5.2,6.0,6.5,5.3,4.3,3.0,1.8,4.3,4.1,4.7,6.7,6.7,6.6,7.2,4.7,5.9,6.4,6.2,4.5,2.1,-0.3,1.7,3.5,3.4,3.8,4.2,4.1,2.4,1.0,1.5,0.0,0.8,1.1,0.7,0.7,0.8,1.3,3.4,2.2,1.7,-0.2,-5.1,-5.3,-1.7,0.3,2.2,4.4,5.8,5.1,2.7,1.2,1.4,0.8,1.2,-1.3,-3.2,-2.7,0.4,0.0,-1.0,-2.0,-4.6,-6.8,-6.9,-5.4,-3.6,-3.7,-4.9,-7.2,-7.4,-4.6,-4.5,-2.8,-0.2,0.9,1.6,3.0,3.3,4.2,3.7,6.1,7.3,8.3,5.2,3.8,4.2),
-  yr2021 = c(17.7,18.1,17.7,15.3,15.4,15,16.4,14.7,12.8,10.8,10.2,10.5,12.8,13.9,13.7,14.1,12.3,15.6,14.2,12.6,11.8,13,13,15.5,13.3,11.5,12.2,10.1,9.6,9.5,8.5,10.5,7.7,7,11,10.8,9.2,9.1,6.8,11.2,14.2,10.3,7.7,7.6,7.8,7.8,10.5,12.5,12.1,9.7,9.6,11.2,11.2,8.8,6.6,7.1,8.1,9.9,9,5.6,7.6,9.8,9.4,7.5,7.8,7.5,6.8,5.9,6,8.6,11.6,9.9,5.8,2.1,6.5,7.6,6.3,3,2.3,2.1,-0.3,-0.4,0.2,-0.7,0.2,3.3,0.7,-1.9,-0.2,0.4,0.5,0.2,0.3,1.4,4.2,5.6,7.2,6.3,3.9,4.7,4.2,0.4,-2.4,0.3,0.7,-4,-5.2,-4.9,-3.6,0.1,1,4.5,7.3,6.3,7.8,6.8,3.7,2.5,-0.9,1.8,2.4,2,1.7,0,3.1,7.2,5.8,0.8,3.7,3.6,1.8,3.3,0.6,1.5,-0.5,3.8,4.7,4.2,4.7,5.6,3.2,5.4,4.9,-0.5,1.2,0.5,3.5,4.7,3.5,3.7,3,5.3,5.2,3.6,1.7,1.6,2.8,5.6,5.4,5.3,5,3.9,4,3.6,4.4,2.2,5.6,5.6,3.4,2.1,0.6,1.4)
+  yr2021 = c(17.7,18.1,17.7,15.3,15.4,15,16.4,14.7,12.8,10.8,10.2,10.5,12.8,13.9,13.7,14.1,12.3,15.6,14.2,12.6,11.8,13,13,15.5,13.3,11.5,12.2,10.1,9.6,9.5,8.5,10.5,7.7,7,11,10.8,9.2,9.1,6.8,11.2,14.2,10.3,7.7,7.6,7.8,7.8,10.5,12.5,12.1,9.7,9.6,11.2,11.2,8.8,6.6,7.1,8.1,9.9,9,5.6,7.6,9.8,9.4,7.5,7.8,7.5,6.8,5.9,6,8.6,11.6,9.9,5.8,2.1,6.5,7.6,6.3,3,2.3,2.1,-0.3,-0.4,0.2,-0.7,0.2,3.3,0.7,-1.9,-0.2,0.4,0.5,0.2,0.3,1.4,4.2,5.6,7.2,6.3,3.9,4.7,4.2,0.4,-2.4,0.3,0.7,-4,-5.2,-4.9,-3.6,0.1,1,4.5,7.3,6.3,7.8,6.8,3.7,2.5,-0.9,1.8,2.4,2,1.7,0,3.1,7.2,5.8,0.8,3.7,3.6,1.8,3.3,0.6,1.5,-0.5,3.8,4.7,4.2,4.7,5.6,3.2,5.4,4.9,-0.5,1.2,0.5,3.5,4.7,3.5,3.7,3,5.3,5.2,3.6,1.7,1.6,2.8,5.6,5.4,5.3,5,3.9,4,3.6,4.4,2.2,5.6,5.6,3.4,2.1,0.6,1.4),
+  yr2022 = c(15.8,15,14.7,16.2,15,13.5,12.4,12.8,10.9,11.8,11.3,10.1,10.4,11.8,12.9,12.5,12.2,11.9,10.7,10.1,10.7,11.3,12.4,11.9,11.9,14.4,14.1,13.3,12.5,10.5,11.2,10.7,10.4,11.2,12.3,12.8,13.5,12.1,12.7,6.8,5.7,10.2,12,11.8,13.2,13.1,11.5,12.9,14.1,12.9,12.8,12.4,11.9,10.8,10.1,10,9.1,9.7,10.8,12.1,12.1,11.1,12.6,12.8,11.3,9.6,8.8,7.6,5.1,2.8,0.4,-2.4,-2.3,1.7,4.4,5.7,5.8,5.2,6.6,5.8,4.6,3.6,3.1,3.1,1.8,2.4,3.2,1.4,-1.2,-5.1,-0.6,-0.2,-4.7,-6.1,-3.7,0.6,-3.8,-9.8,-5.8,-0.6,0.5,5.7,4.7,5.1,3.2,-0.8,3.1,5.2,3.3,5,7.1,6,8,8.8,7.4,4.8,5.8,4,2.4,5.8,6.4,5.3,5.2,5.8,6.1,6.8,5.9,5.7,4.5,3.4,1.7,1.2,1.5,-0.1,0.1,1.1,1,0.4,2.5,-0.4,-0.1,4.2,4.4,3,4.2,1,1.8,-2.1,-0.7,-1.5,-0.3,1.4,1.4,4.3,6.2,4.8,6,3.2,3,3.6,6.3,4.7,3.1,5.9,5.4,2.4,3.6,2.7,0.1,-0.2,1.3,2)
 )
 
 temp_tab_historical$lt_ave_TM <- rowMeans(temp_tab_historical)
 
-### Get 2022 weather data
+### Get 2023 weather data
 
 startDate <- date(first_day)
 endDate <- today()-1
@@ -206,14 +209,14 @@ lt_fill <- data.frame("V1" = lt_fill,
                       "V7" = lt_fill,
                       "V8" = lt_fill,
                       "V9" = lt_fill)
-names(lt_fill) <- c(stations$WSTN_namn, "yr2022")
+names(lt_fill) <- c(stations$WSTN_namn, "yr2023")
 
 dat_sum <- dat_in %>% 
   left_join(stations, by = "WSTNID") %>% 
   select(-c(HOUR, WSTNID, lat, long)) %>% 
   pivot_wider(names_from = WSTN_namn, values_from = TM) %>% 
   rowwise() %>% 
-  mutate(yr2022 = mean(c_across(Borgeby:Jonstorp))) %>% 
+  mutate(yr2023 = mean(c_across(Borgeby:Jonstorp))) %>% 
   ungroup() %>% 
   select(-DAY) %>% 
   rbind(lt_fill)
@@ -256,8 +259,8 @@ lang_col <<- 3
 
 if(mode == "develop"){
   # -------------------------------------------
-  snapshot_date = "2021-11-01"
-  options("repos" = paste0("https://mran.revolutionanalytics.com/snapshot/", snapshot_date))
+  snapshot_date = "2023-08-01"
+  options("repos" = paste0("https://packagemanager.posit.co/cran/", snapshot_date))
   # -------------------------------------------
   
   # -------------------------------------------
@@ -322,7 +325,7 @@ values <- reactiveValues()
 
 {
   language_tab <- matrix(c(
-    "AAA", "SUGAR BEET HARVEST AND STORAGE - 2022 SWEDEN", "SKÖRD OCH LAGRING AV SOCKERBETOR - SVERIGE 2022",
+    "AAA", "SUGAR BEET HARVEST AND STORAGE - 2023 SWEDEN", "SKÖRD OCH LAGRING AV SOCKERBETOR - SVERIGE 2023",
     "ATA", "Field", "Fält",
     "ATB", "Harvest", "Upptagning",
     "ATC", "Clamp", "Stuka",
@@ -337,7 +340,7 @@ values <- reactiveValues()
     "BAE", "The model is general and may not be suitable to apply to your own production system.", "Modellen är generell och kanske inte lämplig för just ditt eget produktionssystem.",
     "BAF", "This model is not able to reflect that variability in the production system that occur from day to day in reality.", "Denna modell kan inte återspegla den variation i produktionssystemet som uppstår från dag till dag i verkligheten.",
     "BAG", "It similarly is not able to reflect your willingness to accept these production risks.", "På samma sätt kan den inte återspegla din vilja att acceptera dessa produktionsrisker.",
-    "BAH", "The 2022 price model for Sweden is applied. Prices are assumed fixed in SEK.", "Prismodellen 2022 för Sverige tillämpas.",
+    "BAH", "The 2023 price model for Sweden is applied. Prices are assumed fixed in SEK.", "Prismodellen 2023 för Sverige tillämpas.",
     "BAI", "INSTRUCTIONS", "INSTRUKTIONER",
     "BAJ", "Basically, just work through the tabs.", "Det är bara att klicka igenom flikarna ovan och fylla i informationen som efterfrågas.",
     "BAK", "The default values set are those that approximately reflect the industry averages.", "De förifyllda värdena är de som ungefär återspeglar branschens genomsnitt.",
@@ -346,19 +349,19 @@ values <- reactiveValues()
     "BAN", "Similarly, when you can see the modelled outcome is different to the actual outcome, this is the time to ask 'why?' and hopefully find some real insight.", "På samma sätt, när du kan se att det modellerade resultatet skiljer sig från det faktiska resultatet, är det här dags att fråga 'varför?' och förhoppningsvis hitta någon verklig insikt.",
     "BAO", "Please note that the cost information in the Delivery tab is not well developed.", "Observera att kostnadsinformationen på fliken Leverans inte är  helt färdigutvecklad.",
     "BAP", "DEFINITIONS", "DEFINITIONER",
-    "BAQ", "Clean (mass): The beet mass that is deemed processible.", "Rena betor (produktion): Tvättade betor minus administrativt avdrag.",
+    "BAQ", "Clean (mass): The beet mass that is deemed processible.", "Rena betor (produktion): Tvättade betor.",
     "BAR", "The term on which root yield is commonly defined.", "Termen som vanligen används för att definiera rotskörd.",
-    "BAS", "The mass is independent of sugar concentration.", "Betvikten är oberoende av sockerhalten",
-    "BAT", "Equals the weight of delivered beet x (1 - dirt-tare).", "Lika med vikt levererad betor x renhet",
-    "BAU", "Clean (prices): The price per tonne of clean beet mass, are adjusted to be for a pol of 17%.", "Rena betor (pris) eller 'Rena betor (17%)': Priset per ton ren betor justeras till en pol på 17%",
+    "BAS", "The mass is independent of sugar concentration.", "Betvikten är oberoende av sockerhalten.",
+    "BAT", "Equals the weight of delivered beet x (1 - dirt-tare).", "Lika med vikt levererad betor x renhet.",
+    "BAU", "Clean (prices): The price per tonne of clean beet mass, are adjusted to be for a pol of 17%.", "Rena betor (pris) eller 'Rena betor (17%)': Priset per ton ren betor justeras till en pol på 17%.",
     "BAV", "The term on which prices are set.", "Termen som priserna fastställs på.",
     "BAW", "The price is adjusted 9% per percentage point change in pol from the base of 17%.", "Priset justeras 9% per procentenhetsförändring i pol från basen på 17%.",
     "BAX", "The conversion to 17% is linear in the change in price per change in pol percentage point.", "Omräkningen till 17% är linjär i förändringen av pris per förändring i pol.",
     "BAY", "This means that the increase/ decrease in price is greater at lower sugar concentrations.", "Det innebär att prisökningen/ sänkningen är större vid lägre sockerkoncentrationer.",
-    "BAZ", "The contract price is for a pol of 17%.", "Kontraktspriset är för en sockerhalt på 17%",
+    "BAZ", "The contract price is for a pol of 17%.", "Kontraktspriset är för en sockerhalt på 17%.",
     "BBA", "If your pol is higher than this, then the prices per tonne clean given in this model will be higher than your contract price.", "Om din sockerhalt är högre än så är priserna per ton ren betor som anges i denna modell högre än ditt kontraktspris.",
     "BBB", "Delivered: The mass that falls out of the back of the truck at Örtofta.", "Levererad: Ton orena betor som levererats till Örtofta.",
-    "BBC", "A large fraction of the mass is soil and unprocessable beet material (dirt tare).", "En stor del av vikten är jord och icke processbart betmaterial",
+    "BBC", "A large fraction of the mass is soil and unprocessable beet material (dirt tare).", "En stor del av vikten är jord och icke processbart betmaterial.",
     "BBD", "Is independent of sugar concentration.", "Är oberoende av sockerhalt.",
     
     
@@ -533,7 +536,8 @@ values <- reactiveValues()
     "KBC", "Date", "Datum",
     "KDD", "SUGAR YIELD", "SOCKERSKÖRD",
     
-    
+
+    # HELP SECTION
     
     
     "CHA", "IN THE FIELD", "I FÄLTET",
@@ -612,10 +616,18 @@ values <- reactiveValues()
     "HHH", "Then convert to a 'dirty' tonne by multiplying by your measured dirt-tare.", "Omvandla sedan till ett 'smutsigt' ton genom att multiplicera med din uppmätta renhet.",
     "HHI", "Bonuses include TopTex bonus, early/late delivery bonus, volume bonus, and dirt-tare bonus/penalty.", "Bonusar inkluderar TopTex-bonus, tidig/sen leveransbonus, volymbonus och renhetsbonus/straff.",
     "HHJ", "The TopTex bonus is 5/10/15 SEK per clean tonne when TopTex is used for at least 7 days prior a delivery after 15Nov/1 Dec/15 Dec.", "TopTex bonusen är 5/10/15 SEK per ton ren betor när TopTex används minst 7 dagar före leverans efter 15 nov/1 dec/15 dec.",
-    "HHK", "Late delivery bonus is 1 SEK per clean tonne per day through December, and 1.5 SEK per clean tonne per day from 1 January.", "Sen leveransbonus är 1 kr per ton ren betor per dag till och med december och 1,5 kr per ton ren betor per dag från den 1 januari.",
-    "HHL", "The volume bonus is 5 SEK (0.5 EUR) per clean tonne if you have increased your area grown under sugar beet by 10% since 2019.", "Volymbonusen är 5 SEK (0,5 EUR) per ton ren betor om du har ökat ditt areal som odlats under sockerbetor med 10% sedan 2019.",
-    "HHM", "Dirt-tare bonus/ penalty is 2 SEK per clean tonne per percentage point below/above 10.5% dirt-tare.", "Renhetsbonus/ straff är 2 SEK per ton ren betor per procentenhet under/ över 89, 5% renhet.",
-    "HHN", "Please note that there is no modelling of dirt-tare in this model - this is assumed constant over the entire growth and storage period", "Observera att det inte finns någon modellering av renhet i denna modell - detta antas konstant under hela tillväxt- och lagringsperioden"
+    "HHK", "Late delivery bonus is 1 SEK per clean tonne per day through to 23 December, and 1.5 SEK per clean tonne per day from 24 December.", "Sen leveransbonus är 1 kr per ton ren betor per dag till och med 23 december och 1,5 kr per ton ren betor per dag från den 24 december.",
+    #"HHL", "The volume bonus is 5 SEK (0.5 EUR) per clean tonne if you have increased your area grown under sugar beet by 10% since 2019.", "Volymbonusen är 5 SEK (0,5 EUR) per ton ren betor om du har ökat ditt areal som odlats under sockerbetor med 10% sedan 2019.",
+    "HHM", "Dirt-tare bonus/ penalty is 2 SEK per clean tonne per percentage point below/above 6.85% dirt-tare.", "Renhetsbonus/ straff är 2 SEK per ton ren betor per procentenhet under/ över 93,15% renhet.",
+    #"HHN", "Please note that there is no modelling of dirt-tare in this model - this is assumed constant over the entire growth and storage period", "Observera att det inte finns någon modellering av renhet i denna modell - detta antas konstant under hela tillväxt- och lagringsperioden",
+    "HHO", "VOLUME BONUS", "VOLYMBONUS",
+    "HHP", "2023 Bonus payments for production are paid on tonnes produced in 2022, as percent of tonnes produced in 2023.", "2023 Bonus payments for production are paid on tonnes produced in 2022, as percent of tonnes produced in 2023.",
+    "HHQ", "The maximum is 100% i.e. when tonnes produced in 2023 are equal to or more than tonnage in 2022.", "The maximum is 100% i.e. when tonnes produced in 2023 are equal to or more than tonnage in 2022.",
+    "HHR", "The payment per tonne is €2.06 = 24.42 SEK.", "The payment per tonne is €2.06 = 24.42 SEK.",
+    "HHS", "All tonnages are 17% equivalent clean tonnage.", "All tonnages are 17% equivalent clean tonnage.",
+    "HHT", "Bonus is calculated as min{[Tonnage 2023]/[Tonnage 2022], 1} x [Tonnage 2022] x 24.42.", "Bonus is calculated as min{[Tonnage 2023]/[Tonnage 2022], 1} x [Tonnage 2022] x 24.42.",
+    "HHU", "Enter the clean tonnes delivered in 2023 as a percent of clean tonnes delivered in 2022.", "Enter the clean tonnes delivered in 2023 as a percent of clean tonnes delivered in 2022.",
+    "HHV", "If production has increased in 2023 over 2022, leave as 100%", "If production has increased in 2023 over 2022, leave as 100%"
     
   ), byrow = T, ncol=3) 
   colnames(language_tab)<- c("REF","EN","SV")
@@ -802,7 +814,7 @@ ui <- fluidPage(
              fluid = T, style = "padding-top:5px",
             sidebarLayout(
               sidebarPanel(
-                dateInput("harvest_date",isolate(values$DAB),value = "2022-11-15"),
+                dateInput("harvest_date",isolate(values$DAB),value = "2023-11-15"),
                 br(),
                 fluidRow(
                   column(10, h4(isolate(values$DAC))),
@@ -823,14 +835,14 @@ ui <- fluidPage(
              sidebarLayout(
                fluidRow(
                  sidebarPanel(
-                   dateInput("cover_date", isolate(values$EAB), value="2022-12-01"),
+                   dateInput("cover_date", isolate(values$EAB), value="2023-12-01"),
                    br(),
                    fluidRow(
                      column(10, h4(isolate(values$EAC))),
                      column(2, actionButton("help_storage_temp", "?"))
                      ),
                    selectInput("temp_clamp_model",isolate(values$EAD), choices = list("Moving average with floor"=1, "Air with floor"=2, "Air"=3, "Ventilated" = 4)),
-                   selectInput("temp_air_yr",isolate(values$EAE), choices = list("2022"="yr2022", "2021"="yr2021", "2020"="yr2020", "2019"="yr2019", "2018"="yr2018", "2017"="yr2017", "2016"="yr2016",
+                   selectInput("temp_air_yr",isolate(values$EAE), choices = list("2023"="yr2023","2022"="yr2022", "2021"="yr2021", "2020"="yr2020", "2019"="yr2019", "2018"="yr2018", "2017"="yr2017", "2016"="yr2016",
                                                                                  "Long term average"="lt_ave_TM", "Borgeby"="Borgeby","Hammenhög"="Hammenhög","Sandby gård"= "Sandby gård","Gretelund"="Gretelund","Lovisero"="Lovisero","Tofta"="Tofta","Hviderup"="Hviderup","Jonstorp"="Jonstorp")),
                    sliderInput("clamp_size", isolate(values$EAF), step = 0.1, min=7, max=9, value=8),
                    sliderInput("ref_temp", isolate(values$EAG), min=0, max=10, value=2)
@@ -865,7 +877,7 @@ ui <- fluidPage(
                      column(10, h4(isolate(values$FAB))),
                      column(2,actionButton("help_delivery", "?"))
                      ),
-                   dateInput("delivery_date",isolate(values$FAC),value = "2023-01-15"),
+                   dateInput("delivery_date",isolate(values$FAC),value = "2024-01-15"),
                    sliderInput("delivery_distance",isolate(values$FAD),min=1,max=15,step=0.1,value=5)
                    #sliderInput("delivery_cost",isolate(values$FAE),min=0,max=200000,value=0)
                  ),
@@ -886,12 +898,12 @@ ui <- fluidPage(
                     column(2, actionButton("help_production", "?"))
                   ),
                   fluidRow(
-                    column(6,dateInput("prod_data_date",isolate(values$GAC),value = "2022-09-15")),
+                    column(6,dateInput("prod_data_date",isolate(values$GAC),value = "2023-09-15")),
                     column(6,textOutput("prod_data_loc"),style = "margin-top: 30px")
                   ),
-                  sliderInput("root_yield",isolate(values$GAD), min=40, max=120, step = 1, value = 60),
-                  sliderInput("pol", isolate(values$GAE), min=15, max=22, value=16, step = 0.1),
-                  sliderInput("renhet", isolate(values$GAF), min=78, max=100, value=89.5, step = 0.1)
+                  sliderInput("root_yield",isolate(values$GAD), min=40, max=120, step = 1, value = 65),
+                  sliderInput("pol", isolate(values$GAE), min=15, max=22, value=17, step = 0.1),
+                  sliderInput("renhet", isolate(values$GAF), min=78, max=100, value=93.15, step = 0.1)
                 ),
                 mainPanel(
                    column(12, h4(isolate(values$GAG)), tableOutput("root_harvest_tab"))
@@ -904,12 +916,13 @@ ui <- fluidPage(
                      column(10,h4(isolate(values$GAH))),
                      column(2,actionButton("help_payment", "?"))
                    ),
-                   numericInput("price", isolate(values$GAI), value=308),
+                   numericInput("price", isolate(values$GAI), value=502),
                    #checkboxInput("vol",isolate(values$GAJ), value = F),
-                   selectInput("vol",isolate(values$GAJ), 
-                               choices = list(">90% (€1.8)"=1, 
-                                              ">80% (€1.4)"=2,
-                                              "<80% (€0.0)"=3)),
+                   fluidRow(
+                     column(10, sliderInput("vol",isolate(values$GAJ), min = 0, max = 100, value = 100, step = 1)),
+                     column(2, actionButton("help_bonus", "?"))
+                     ),
+                    
                    br(),
                  ),
                  mainPanel(
@@ -1085,8 +1098,8 @@ server <- function(input, output, session){
     LSG_mass_loss_pc_daily <- LSG_mass_loss_pc_daily*LSG_pot
     
     LSG_mass_loss_pc_cum <- cumsum(LSG_mass_loss_pc_daily)
-    LSG_pol[which(date_full >= as.POSIXct("2022-11-01"))] <- 0.01
-    LSG_pol[which(date_full >= as.POSIXct("2022-11-15"))] <- 0
+    LSG_pol[which(date_full >= as.POSIXct("2023-11-01"))] <- 0.01
+    LSG_pol[which(date_full >= as.POSIXct("2023-11-15"))] <- 0
     LSG_pol_loss_pp_cum <- cumsum(LSG_pol)    
     
     LSG_tab <- data.frame(date_full,LSG_mass_loss_pc_daily,LSG_mass_loss_pc_cum,LSG_pol_loss_pp_cum)
@@ -1373,9 +1386,7 @@ server <- function(input, output, session){
     full_tab$price_TT[full_tab$date_full < as.POSIXct(cover_date)+7] <- 0
     
     #Volume bonus
-    if (vol == 1) full_tab$price_vol = kr_vol_90
-    if (vol == 2) full_tab$price_vol = kr_vol_80
-    if (vol == 3) full_tab$price_vol = 0
+    full_tab$price_vol = vol/100*sek_eur*kr_vol
     
     #renhet bonus
     full_tab$renhet_diff <- full_tab$renhet_pp_cum - (ref_renhet*100)
@@ -1936,10 +1947,28 @@ server <- function(input, output, session){
       values$HHI,
       values$HHJ,
       values$HHK,
-      values$HHL,
+      #values$HHL,
       values$HHM,
       br(),br(),
-      values$HHN,
+      #values$HHN,
+      easyClose = T,
+      footer = NULL
+    ))
+  })
+  
+  observeEvent(input$help_bonus, {
+    showModal(modalDialog(
+      title = values$HHO,
+      values$HHU,
+      values$HHV,
+      br(),br(),
+      values$HHP,
+      values$HHQ,
+      br(),br(),
+      values$HHR,
+      values$HHS,
+      values$HHT,
+      br(),br(),
       easyClose = T,
       footer = NULL
     ))
